@@ -1,10 +1,9 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, Query, UploadFile, File
 from fastapi.responses import JSONResponse
 import torch
 from torchvision import models, transforms
 from PIL import Image
 import io
-from fertilizer_advice import get_fertilizer_recommendation
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
@@ -88,28 +87,51 @@ def recommend_fertilizer(data: FertilizerRequest):
 
 
 @app.get("/context")
-def get_context(lat: float = 17.3850, lon: float = 78.4867):
-    """Get simple soil & weather context based on coordinates"""
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
-    res = requests.get(url).json()
+def get_context(lat: float = Query(...), lon: float = Query(...)):
+    """Fetch live weather + simple soil and condition info."""
+    try:
+        # ✅ Fetch real-time weather data
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        r = requests.get(url)
+        data = r.json()
+        weather = data["current_weather"]
 
-    temp = res["current_weather"]["temperature"]
-    wind = res["current_weather"]["windspeed"]
+        temperature = weather["temperature"]
+        windspeed = weather["windspeed"]
 
-    # simple heuristics
-    if temp > 32:
-        condition = "Hot and Dry"
-    elif temp < 20:
-        condition = "Cool and Moist"
-    else:
-        condition = "Normal"
+        # 🧠 Simple logic for demo
+        if temperature < 20:
+            condition = "cool"
+        elif temperature < 30:
+            condition = "normal"
+        else:
+            condition = "hot"
 
-    # dummy soil mapping by lat/lon (you can expand later)
-    soil_type = "Red" if lat < 20 else "Black"
+        # 🌱 Basic soil inference (you can extend later)
+        if lat > 20:
+            soil = "red"
+        else:
+            soil = "black"
 
-    return {
-        "temperature": temp,
-        "windspeed": wind,
-        "soil": soil_type,
-        "condition": condition,
+        return {
+            "temperature": temperature,
+            "windspeed": windspeed,
+            "soil": soil,
+            "condition": condition
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+    
+
+@app.get("/market")
+def get_market_prices():
+    """Return current crop market prices (mock/demo)."""
+    prices = {
+        "rice": {"price": "₹1800 / quintal", "market": "Nizamabad"},
+        "wheat": {"price": "₹2100 / quintal", "market": "Kurnool"},
+        "cotton": {"price": "₹6400 / quintal", "market": "Warangal"},
+        "tomato": {"price": "₹2400 / quintal", "market": "Madurai"},
+        "groundnut": {"price": "₹5200 / quintal", "market": "Anantapur"}
     }
+    return prices

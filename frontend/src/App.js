@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import FertilizerPage from "./pages/FertilizerPage";
 import ContextPage from "./pages/ContextPage";
 import DashboardPage from "./pages/DashboardPage";
+import MarketPage from "./pages/MarketPage";
+
 
 
 function DiseaseDetectionPage() {
@@ -56,28 +58,20 @@ function App() {
   return (
     <Router>
       <div style={{ textAlign: "center", marginTop: "30px" }}>
-        {/* <Link to="/" style={{ marginRight: "20px" }}>Disease Detection</Link>
-        <Link to="/fertilizer" style={{ marginRight: "20px" }}>Fertilizer</Link>
-        <Link to="/context">Context Info</Link> */}
 
         <Link to="/" style={{ marginRight: "20px" }}>Dashboard</Link>
         <Link to="/disease" style={{ marginRight: "20px" }}>Disease Detection</Link>
         <Link to="/fertilizer" style={{ marginRight: "20px" }}>Fertilizer</Link>
-        <Link to="/context">Context</Link>
-
-
-
-        {/* <Routes>
-          <Route path="/" element={<DiseaseDetectionPage />} />
-          <Route path="/fertilizer" element={<FertilizerPage />} />
-          <Route path="/context" element={<ContextPage />} />
-        </Routes> */}
+        <Link to="/context" style={{ marginRight: "20px" }}>Context</Link>
+        <Link to="/market" style={{ marginRight: "20px" }}>Market Prices</Link>
 
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/disease" element={<DiseaseDetectionPage />} />
           <Route path="/fertilizer" element={<FertilizerPage />} />
           <Route path="/context" element={<ContextPage />} />
+          <Route path="/market" element={<MarketPage />} />
+
         </Routes>
 
       </div>
