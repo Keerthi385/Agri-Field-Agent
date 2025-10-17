@@ -203,7 +203,7 @@ def generate_advisory(data: AdvisoryRequest):
 
     # 🧠 Generate unified advisory
     advisory = (
-        f"Your {crop} crop is affected by {disease.replace('___', ' ')}. "
+        f"Your {crop} crop is affected by {disease.replace('_', ' ')}. "
         f"{disease_info.get('treatment', '')} "
         f"Maintain {condition} field conditions. "
         f"Recommended fertilizer: {fertilizer}. "
@@ -221,7 +221,7 @@ def generate_advisory(data: AdvisoryRequest):
 def generate_voice(data: AdvisoryRequest):
     """Generate vernacular (Telugu) voice note for advisory."""
     crop = data.crop.lower()
-    disease = data.disease.replace("___", " ")
+    disease = data.disease.replace("_", " ")
     soil = data.soil
     condition = data.condition
 
@@ -239,7 +239,7 @@ def generate_voice(data: AdvisoryRequest):
     except Exception as e:
         translated_text = advisory_text  # fallback if translation fails
 
-    # 🎙️ Convert translated Telugu text to speech
+    # 🎙 Convert translated Telugu text to speech
     os.makedirs("voice_notes", exist_ok=True)
     file_path = "voice_notes/advice.mp3"
     tts = gTTS(translated_text, lang="te")
