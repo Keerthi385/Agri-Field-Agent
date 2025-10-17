@@ -10,6 +10,7 @@ import requests
 from torchvision import datasets
 import json
 from gtts import gTTS
+from googletrans import Translator
 import os
 from fastapi.staticfiles import StaticFiles
 
@@ -55,6 +56,8 @@ model.eval()
 # =====================
 # Predict endpoint
 # =====================
+import json
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
@@ -79,6 +82,7 @@ async def predict(file: UploadFile = File(...)):
         "prediction": result,
         "details": info
     })
+
 
 
 
@@ -216,23 +220,30 @@ def generate_advisory(data: AdvisoryRequest):
 
 @app.post("/voice")
 def generate_voice(data: AdvisoryRequest):
-    """Generate vernacular voice note for advisory."""
+    """Generate vernacular (Telugu) voice note for advisory."""
     crop = data.crop.lower()
     disease = data.disease.replace("___", " ")
     soil = data.soil
     condition = data.condition
 
-    # Generate advisory (reuse logic from earlier)
+    # Generate English advisory
     advisory_text = (
         f"Your {crop} crop is affected by {disease}. "
         f"Maintain {condition} field conditions and use proper fertilizer. "
         f"For healthy growth, consult the local agriculture office if needed."
     )
 
-    # 🎙️ Convert to Telugu (you can change to 'hi' for Hindi)
-    tts = gTTS(advisory_text, lang="te")
-    file_path = "voice_notes/advice.mp3"
+    # 🌐 Translate English → Telugu using Google Translate
+    translator = Translator()
+    try:
+        translated_text = translator.translate(advisory_text, dest="te").text
+    except Exception as e:
+        translated_text = advisory_text  # fallback if translation fails
+
+    # 🎙️ Convert translated Telugu text to speech
     os.makedirs("voice_notes", exist_ok=True)
+    file_path = "voice_notes/advice.mp3"
+    tts = gTTS(translated_text, lang="te")
     tts.save(file_path)
 
     return {"audio_url": f"http://127.0.0.1:8000/{file_path}"}
