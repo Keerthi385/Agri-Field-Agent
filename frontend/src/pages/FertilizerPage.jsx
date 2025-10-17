@@ -31,39 +31,41 @@ export default function FertilizerPage() {
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "80px" }}>
-      <h1>🌾 Fertilizer Recommendation</h1>
-      <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-        <input
-          type="text"
-          placeholder="Crop (e.g., Rice)"
-          value={crop}
-          onChange={(e) => setCrop(e.target.value)}
-          style={{ margin: "5px", padding: "8px" }}
-        />
-        <input
-          type="text"
-          placeholder="Soil Type (e.g., Red)"
-          value={soil}
-          onChange={(e) => setSoil(e.target.value)}
-          style={{ margin: "5px", padding: "8px" }}
-        />
-        <input
-          type="text"
-          placeholder="Condition (e.g., Normal)"
-          value={condition}
-          onChange={(e) => setCondition(e.target.value)}
-          style={{ margin: "5px", padding: "8px" }}
-        />
-        <button type="submit" style={{ marginTop: "10px" }}>
-          {loading ? "Fetching..." : "Get Recommendation"}
-        </button>
-      </form>
+    <div>
+      <h1 className="page-title">🌾 Fertilizer Recommendation</h1>
+      <div className="card half">
+        <form onSubmit={handleSubmit} className="stack">
+          <input
+            className="input"
+            type="text"
+            placeholder="Crop (e.g., Rice)"
+            value={crop}
+            onChange={(e) => setCrop(e.target.value)}
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder="Soil Type (e.g., Red)"
+            value={soil}
+            onChange={(e) => setSoil(e.target.value)}
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder="Condition (e.g., Normal)"
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+          />
+          <button type="submit" className="btn">
+            {loading ? "Fetching..." : "Get Recommendation"}
+          </button>
+        </form>
+      </div>
 
       {result && (
-        <div style={{ marginTop: "30px" }}>
-          <h2>🌱 Recommended Fertilizer: {result.fertilizer}</h2>
-          <p>{result.advice}</p>
+        <div className="card" style={{ marginTop: "20px" }}>
+          <h2>🌱 Recommended Fertilizer: <span className="pill">{result.fertilizer}</span></h2>
+          <p className="muted">{result.advice}</p>
         </div>
       )}
     </div>

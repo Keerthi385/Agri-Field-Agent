@@ -5,6 +5,7 @@ import FertilizerPage from "./pages/FertilizerPage";
 import ContextPage from "./pages/ContextPage";
 import DashboardPage from "./pages/DashboardPage";
 import MarketPage from "./pages/MarketPage";
+import "./App.css";
 
 
 
@@ -74,23 +75,28 @@ function DiseaseDetectionPage() {
 function App() {
   return (
     <Router>
-      <div style={{ textAlign: "center", marginTop: "30px" }}>
+      <nav className="nav">
+        <div className="brand">
+          <span>🌿</span>
+          <span>Agri Field Agent</span>
+        </div>
+        <div className="nav-links">
+          <Link to="/" className="nav-link">Dashboard</Link>
+          <Link to="/disease" className="nav-link">Disease</Link>
+          <Link to="/fertilizer" className="nav-link">Fertilizer</Link>
+          <Link to="/context" className="nav-link">Context</Link>
+          <Link to="/market" className="nav-link">Market</Link>
+        </div>
+      </nav>
 
-        <Link to="/" style={{ marginRight: "20px" }}>Dashboard</Link>
-        <Link to="/disease" style={{ marginRight: "20px" }}>Disease Detection</Link>
-        <Link to="/fertilizer" style={{ marginRight: "20px" }}>Fertilizer</Link>
-        <Link to="/context" style={{ marginRight: "20px" }}>Context</Link>
-        <Link to="/market" style={{ marginRight: "20px" }}>Market Prices</Link>
-
+      <div className="container">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/disease" element={<DiseaseDetectionPage />} />
           <Route path="/fertilizer" element={<FertilizerPage />} />
           <Route path="/context" element={<ContextPage />} />
           <Route path="/market" element={<MarketPage />} />
-
         </Routes>
-
       </div>
     </Router>
   );
