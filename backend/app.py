@@ -8,8 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
 from torchvision import datasets
+import json
+from gtts import gTTS
+import os
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+# app.mount("/voice_notes", StaticFiles(directory="voice_notes"), name="voice_notes")
+os.makedirs("voice_notes", exist_ok=True)
+app.mount("/voice_notes", StaticFiles(directory="voice_notes"), name="voice_notes")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # allow all origins (frontend)
@@ -17,8 +27,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 
 
 # =====================
@@ -58,7 +66,19 @@ async def predict(file: UploadFile = File(...)):
         _, pred = outputs.max(1)
 
     result = class_names[pred.item()]
-    return JSONResponse({"prediction": result})
+
+    # 🧠 Load disease info
+    try:
+        with open("disease_library.json", "r") as f:
+            disease_info = json.load(f)
+        info = disease_info.get(result, {})
+    except Exception:
+        info = {}
+
+    return JSONResponse({
+        "prediction": result,
+        "details": info
+    })
 
 
 
@@ -135,3 +155,84 @@ def get_market_prices():
         "groundnut": {"price": "₹5200 / quintal", "market": "Anantapur"}
     }
     return prices
+
+
+class AdvisoryRequest(BaseModel):
+    crop: str
+    disease: str
+    soil: str
+    condition: str
+
+@app.post("/advisory")
+def generate_advisory(data: AdvisoryRequest):
+    """Combine disease, fertilizer, weather, and price data."""
+    crop = data.crop.lower()
+    disease = data.disease
+    soil = data.soil
+    condition = data.condition
+
+    # 🌱 Get fertilizer advice (reuse existing logic)
+    if soil == "black" and crop == "cotton":
+        fertilizer = "Urea and DAP"
+    elif soil == "sandy" and crop == "wheat":
+        fertilizer = "Ammonium Sulphate"
+    elif soil == "red" and crop == "rice":
+        fertilizer = "Super Phosphate"
+    else:
+        fertilizer = "NPK Mixture (General Purpose)"
+
+    # 📘 Get disease info
+    import json
+    try:
+        with open("disease_library.json", "r") as f:
+            disease_data = json.load(f)
+        disease_info = disease_data.get(disease, {})
+    except Exception:
+        disease_info = {}
+
+    # 📈 Market prices (mock for now)
+    market_prices = {
+        "potato": "₹1800 / quintal",
+        "rice": "₹2100 / quintal",
+        "cotton": "₹6400 / quintal"
+    }
+    price = market_prices.get(crop, "₹2000 / quintal")
+
+    # 🧠 Generate unified advisory
+    advisory = (
+        f"Your {crop} crop is affected by {disease.replace('___', ' ')}. "
+        f"{disease_info.get('treatment', '')} "
+        f"Maintain {condition} field conditions. "
+        f"Recommended fertilizer: {fertilizer}. "
+        f"Current market price: {price}."
+    )
+
+    return {
+        "advisory": advisory,
+        "fertilizer": fertilizer,
+        "price": price,
+        "disease_info": disease_info
+    }
+
+@app.post("/voice")
+def generate_voice(data: AdvisoryRequest):
+    """Generate vernacular voice note for advisory."""
+    crop = data.crop.lower()
+    disease = data.disease.replace("___", " ")
+    soil = data.soil
+    condition = data.condition
+
+    # Generate advisory (reuse logic from earlier)
+    advisory_text = (
+        f"Your {crop} crop is affected by {disease}. "
+        f"Maintain {condition} field conditions and use proper fertilizer. "
+        f"For healthy growth, consult the local agriculture office if needed."
+    )
+
+    # 🎙️ Convert to Telugu (you can change to 'hi' for Hindi)
+    tts = gTTS(advisory_text, lang="te")
+    file_path = "voice_notes/advice.mp3"
+    os.makedirs("voice_notes", exist_ok=True)
+    tts.save(file_path)
+
+    return {"audio_url": f"http://127.0.0.1:8000/{file_path}"}
