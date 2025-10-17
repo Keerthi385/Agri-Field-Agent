@@ -15,4 +15,6 @@ pydantic
 
 # PyTorch (choose the appropriate wheel for your platform/CUDA)
 torch
+
 torchvision
+
