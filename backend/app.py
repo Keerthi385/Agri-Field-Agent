@@ -145,15 +145,51 @@ def get_context(lat: float = Query(...), lon: float = Query(...)):
     
 
 @app.get("/market")
-def get_market_prices():
-    """Return current crop market prices (mock/demo)."""
-    prices = {
+def get_market_prices(lat: float | None = Query(default=None), lon: float | None = Query(default=None)):
+    """Return current crop market prices. If coordinates are provided, pick a nearby market.
+
+    This is a lightweight mock with regional defaults to avoid impacting existing behavior.
+    When no coords are provided, we return the previous static table.
+    """
+    # Default prices (previous behavior)
+    default_prices = {
         "rice": {"price": "₹1800 / quintal", "market": "Nizamabad"},
         "wheat": {"price": "₹2100 / quintal", "market": "Kurnool"},
         "cotton": {"price": "₹6400 / quintal", "market": "Warangal"},
         "tomato": {"price": "₹2400 / quintal", "market": "Madurai"},
         "groundnut": {"price": "₹5200 / quintal", "market": "Anantapur"}
     }
+
+    if lat is None or lon is None:
+        return default_prices
+
+    # Very simple region buckets based on latitude/longitude ranges
+    # South, Central, North mock segments with slightly varied markets/prices
+    if lat < 15:
+        prices = {
+            "rice": {"price": "₹1850 / quintal", "market": "Thanjavur"},
+            "wheat": {"price": "₹2050 / quintal", "market": "Vijayapura"},
+            "cotton": {"price": "₹6500 / quintal", "market": "Guntur"},
+            "tomato": {"price": "₹2600 / quintal", "market": "Kolar"},
+            "groundnut": {"price": "₹5100 / quintal", "market": "Tirupattur"}
+        }
+    elif lat < 23:
+        prices = {
+            "rice": {"price": "₹1900 / quintal", "market": "Raichur"},
+            "wheat": {"price": "₹2150 / quintal", "market": "Nagpur"},
+            "cotton": {"price": "₹6350 / quintal", "market": "Nanded"},
+            "tomato": {"price": "₹2300 / quintal", "market": "Pune"},
+            "groundnut": {"price": "₹5250 / quintal", "market": "Solapur"}
+        }
+    else:
+        prices = {
+            "rice": {"price": "₹2000 / quintal", "market": "Varanasi"},
+            "wheat": {"price": "₹2250 / quintal", "market": "Indore"},
+            "cotton": {"price": "₹6200 / quintal", "market": "Surat"},
+            "tomato": {"price": "₹2200 / quintal", "market": "Jaipur"},
+            "groundnut": {"price": "₹5350 / quintal", "market": "Rajkot"}
+        }
+
     return prices
 
 
