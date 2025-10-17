@@ -9,7 +9,7 @@ export default function MarketPage() {
     const fetchWithCoords = async (lat, lon) => {
       try {
         const res = await axios.get(`http://127.0.0.1:8000/market`, {
-          params: lat != null && lon != null ? { lat, lon } : {}
+          params: lat != null && lon != null ? { lat, lon } : {},
         });
         setPrices(res.data);
       } catch (e) {
@@ -36,40 +36,35 @@ export default function MarketPage() {
   }, []);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "80px" }}>
-      <h1>📈 Market Prices</h1>
+    <div>
+      <h1 className="page-title">📈 Market Prices</h1>
       {geoError && <p style={{ color: "#aa0000" }}>{geoError}</p>}
       {!prices ? (
         <p>Loading...</p>
       ) : (
-        <table
-          style={{
-            margin: "20px auto",
-            borderCollapse: "collapse",
-            width: "60%",
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: "#4CAF50", color: "white" }}>
-              <th style={th}>Crop</th>
-              <th style={th}>Price</th>
-              <th style={th}>Market</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(prices).map(([crop, info]) => (
-              <tr key={crop}>
-                <td style={td}>{crop}</td>
-                <td style={td}>{info.price}</td>
-                <td style={td}>{info.market}</td>
+        <div className="card">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Crop</th>
+                <th>Price</th>
+                <th>Market</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {Object.entries(prices).map(([crop, info]) => (
+                <tr key={crop}>
+                  <td>{crop}</td>
+                  <td>{info.price}</td>
+                  <td>{info.market}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
 
-const th = { padding: "10px", border: "1px solid #ddd" };
-const td = { padding: "10px", border: "1px solid #ddd" };
+// removed unused styles to fix warnings
