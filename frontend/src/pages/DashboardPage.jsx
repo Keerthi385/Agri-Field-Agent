@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function DashboardPage() {
   return (
     <div style={{ textAlign: "center", marginTop: "70px" }}>
-      <h1>🌾 Agri Field Agent Dashboard</h1>
+      <h1>🌾 Agri Advisory Field Agent Dashboard</h1>
       <p style={{ color: "gray", fontSize: "18px" }}>
         Smart farming assistant to detect plant diseases, suggest fertilizers, and analyze field context.
       </p>
