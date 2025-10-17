@@ -1,0 +1,17 @@
+{
+  "Potato___Early_blight": {
+    "cause": "Fungal infection caused by Alternaria solani.",
+    "treatment": "Spray Mancozeb 75% WP @ 2g per liter of water.",
+    "prevention": "Avoid overhead irrigation and remove infected leaves promptly."
+  },
+  "Apple___Black_rot": {
+    "cause": "Caused by the fungus Diplodia seriata.",
+    "treatment": "Use copper-based fungicides and remove infected fruit mummies.",
+    "prevention": "Prune dead wood and disinfect pruning tools."
+  },
+  "Corn_(maize)___Common_rust_": {
+    "cause": "Fungal disease caused by Puccinia sorghi.",
+    "treatment": "Spray Mancozeb or Propiconazole as per recommendation.",
+    "prevention": "Grow resistant hybrids and practice crop rotation."
+  }
+}

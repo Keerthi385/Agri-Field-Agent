@@ -12,6 +12,8 @@ function DiseaseDetectionPage() {
   const [file, setFile] = useState(null);
   const [prediction, setPrediction] = useState("");
   const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState(null);
+
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -32,6 +34,8 @@ function DiseaseDetectionPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setPrediction(res.data.prediction);
+      setDetails(res.data.details);
+
     } catch (err) {
       console.error(err);
       alert("Error uploading image!");
@@ -48,7 +52,20 @@ function DiseaseDetectionPage() {
         {loading ? "Predicting..." : "Predict Disease"}
       </button>
       <div style={{ marginTop: "30px" }}>
-        {prediction && <h2>🩺 Result: {prediction}</h2>}
+        {/* {prediction && <h2>🩺 Result: {prediction}</h2>} */}
+        {prediction && (
+          <div style={{ marginTop: "30px", lineHeight: "1.8" }}>
+            <h2>🩺 Result: {prediction}</h2>
+            {details && (
+              <div style={{ marginTop: "15px", textAlign: "left", width: "60%", margin: "auto" }}>
+                <p><b>Cause:</b> {details.cause}</p>
+                <p><b>Treatment:</b> {details.treatment}</p>
+                <p><b>Prevention:</b> {details.prevention}</p>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
