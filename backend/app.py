@@ -56,7 +56,6 @@ model.eval()
 # =====================
 # Predict endpoint
 # =====================
-import json
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):

@@ -16,7 +16,16 @@ pydantic
 # PyTorch (choose the appropriate wheel for your platform/CUDA)
 torch
 <<<<<<< HEAD
+<<<<<<< HEAD
 torchvision
 =======
 torchvision
 >>>>>>> parent of 2f5994df (Merge branch 'master' into master)
+=======
+
+torchvision
+
+# Text-to-speech for voice notes
+gtts
+
+>>>>>>> 3d658baf91069cab38852b2796f936f50046445b
