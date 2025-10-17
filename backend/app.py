@@ -10,6 +10,7 @@ import requests
 from torchvision import datasets
 import json
 from gtts import gTTS
+from googletrans import Translator
 import os
 from fastapi.staticfiles import StaticFiles
 
@@ -55,6 +56,7 @@ model.eval()
 # =====================
 # Predict endpoint
 # =====================
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
@@ -79,6 +81,7 @@ async def predict(file: UploadFile = File(...)):
         "prediction": result,
         "details": info
     })
+
 
 
 
@@ -145,51 +148,15 @@ def get_context(lat: float = Query(...), lon: float = Query(...)):
     
 
 @app.get("/market")
-def get_market_prices(lat: float | None = Query(default=None), lon: float | None = Query(default=None)):
-    """Return current crop market prices. If coordinates are provided, pick a nearby market.
-
-    This is a lightweight mock with regional defaults to avoid impacting existing behavior.
-    When no coords are provided, we return the previous static table.
-    """
-    # Default prices (previous behavior)
-    default_prices = {
+def get_market_prices():
+    """Return current crop market prices (mock/demo)."""
+    prices = {
         "rice": {"price": "₹1800 / quintal", "market": "Nizamabad"},
         "wheat": {"price": "₹2100 / quintal", "market": "Kurnool"},
         "cotton": {"price": "₹6400 / quintal", "market": "Warangal"},
         "tomato": {"price": "₹2400 / quintal", "market": "Madurai"},
         "groundnut": {"price": "₹5200 / quintal", "market": "Anantapur"}
     }
-
-    if lat is None or lon is None:
-        return default_prices
-
-    # Very simple region buckets based on latitude/longitude ranges
-    # South, Central, North mock segments with slightly varied markets/prices
-    if lat < 15:
-        prices = {
-            "rice": {"price": "₹1850 / quintal", "market": "Thanjavur"},
-            "wheat": {"price": "₹2050 / quintal", "market": "Vijayapura"},
-            "cotton": {"price": "₹6500 / quintal", "market": "Guntur"},
-            "tomato": {"price": "₹2600 / quintal", "market": "Kolar"},
-            "groundnut": {"price": "₹5100 / quintal", "market": "Tirupattur"}
-        }
-    elif lat < 23:
-        prices = {
-            "rice": {"price": "₹1900 / quintal", "market": "Raichur"},
-            "wheat": {"price": "₹2150 / quintal", "market": "Nagpur"},
-            "cotton": {"price": "₹6350 / quintal", "market": "Nanded"},
-            "tomato": {"price": "₹2300 / quintal", "market": "Pune"},
-            "groundnut": {"price": "₹5250 / quintal", "market": "Solapur"}
-        }
-    else:
-        prices = {
-            "rice": {"price": "₹2000 / quintal", "market": "Varanasi"},
-            "wheat": {"price": "₹2250 / quintal", "market": "Indore"},
-            "cotton": {"price": "₹6200 / quintal", "market": "Surat"},
-            "tomato": {"price": "₹2200 / quintal", "market": "Jaipur"},
-            "groundnut": {"price": "₹5350 / quintal", "market": "Rajkot"}
-        }
-
     return prices
 
 
@@ -236,7 +203,7 @@ def generate_advisory(data: AdvisoryRequest):
 
     # 🧠 Generate unified advisory
     advisory = (
-        f"Your {crop} crop is affected by {disease.replace('___', ' ')}. "
+        f"Your {crop} crop is affected by {disease.replace('_', ' ')}. "
         f"{disease_info.get('treatment', '')} "
         f"Maintain {condition} field conditions. "
         f"Recommended fertilizer: {fertilizer}. "
@@ -252,27 +219,30 @@ def generate_advisory(data: AdvisoryRequest):
 
 @app.post("/voice")
 def generate_voice(data: AdvisoryRequest):
-    """Generate vernacular voice note for advisory."""
+    """Generate vernacular (Telugu) voice note for advisory."""
     crop = data.crop.lower()
-    disease = data.disease.replace("___", " ")
+    disease = data.disease.replace("_", " ")
     soil = data.soil
     condition = data.condition
 
-    # Generate advisory (reuse logic from earlier)
+    # Generate English advisory
     advisory_text = (
         f"Your {crop} crop is affected by {disease}. "
         f"Maintain {condition} field conditions and use proper fertilizer. "
         f"For healthy growth, consult the local agriculture office if needed."
     )
 
-    # 🎙️ Convert to Telugu (you can change to 'hi' for Hindi)
-    tts = gTTS(advisory_text, lang="te")
-    file_path = "voice_notes/advice.mp3"
+    # 🌐 Translate English → Telugu using Google Translate
+    translator = Translator()
+    try:
+        translated_text = translator.translate(advisory_text, dest="te").text
+    except Exception as e:
+        translated_text = advisory_text  # fallback if translation fails
+
+    # 🎙 Convert translated Telugu text to speech
     os.makedirs("voice_notes", exist_ok=True)
+    file_path = "voice_notes/advice.mp3"
+    tts = gTTS(translated_text, lang="te")
     tts.save(file_path)
 
     return {"audio_url": f"http://127.0.0.1:8000/{file_path}"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
