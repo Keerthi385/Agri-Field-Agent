@@ -77,8 +77,7 @@ function App() {
     <Router>
       <nav className="nav">
         <div className="brand">
-          <span>🌿</span>
-          <span>Agri Field Agent</span>
+          <span style={{fontSize: '20px'}}>🌿Agri Advisory Field Agent</span>
         </div>
         <div className="nav-links">
           <Link to="/" className="nav-link">Dashboard</Link>
