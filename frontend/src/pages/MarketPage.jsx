@@ -3,16 +3,42 @@ import axios from "axios";
 
 export default function MarketPage() {
   const [prices, setPrices] = useState(null);
+  const [geoError, setGeoError] = useState("");
 
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/market")
-      .then(res => setPrices(res.data))
-      .catch(() => alert("Error fetching market prices"));
+    const fetchWithCoords = async (lat, lon) => {
+      try {
+        const res = await axios.get(`http://127.0.0.1:8000/market`, {
+          params: lat != null && lon != null ? { lat, lon } : {}
+        });
+        setPrices(res.data);
+      } catch (e) {
+        alert("Error fetching market prices");
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          fetchWithCoords(latitude, longitude);
+        },
+        () => {
+          setGeoError("Location permission denied. Showing default prices.");
+          fetchWithCoords();
+        },
+        { enableHighAccuracy: false, timeout: 7000, maximumAge: 300000 }
+      );
+    } else {
+      setGeoError("Geolocation not supported. Showing default prices.");
+      fetchWithCoords();
+    }
   }, []);
 
   return (
     <div style={{ textAlign: "center", marginTop: "80px" }}>
       <h1>📈 Market Prices</h1>
+      {geoError && <p style={{ color: "#aa0000" }}>{geoError}</p>}
       {!prices ? (
         <p>Loading...</p>
       ) : (
