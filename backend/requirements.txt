@@ -1,0 +1,18 @@
+# Requirements for Agri-Field-Agent backend
+# NOTE: PyTorch has platform- and CUDA-specific wheels. On Windows you may need to
+# install the proper torch/torchvision build for your CUDA version. Example CPU-only:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+fastapi
+uvicorn[standard]
+python-multipart
+requests
+pillow
+aiofiles
+
+# Explicitly include pydantic (used directly in app.py)
+pydantic
+
+# PyTorch (choose the appropriate wheel for your platform/CUDA)
+torch
+torchvision
