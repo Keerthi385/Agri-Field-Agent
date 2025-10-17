@@ -33,31 +33,21 @@ export default function ContextPage() {
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "80px" }}>
-      <h1>📍 Field Context Info</h1>
+    <div>
+      <h1 className="page-title">📍 Field Context</h1>
 
       {!context && !error && (
-        <button
-          onClick={getContext}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
+        <button onClick={getContext} className="btn">
           {loading ? "Fetching..." : "Detect My Location & Context"}
         </button>
       )}
 
       {error && (
-        <p style={{ color: "red", marginTop: "20px" }}>{error}</p>
+        <p style={{ color: "#a40000", marginTop: "20px" }}>{error}</p>
       )}
 
       {context && (
-        <div style={{ marginTop: "30px", lineHeight: "1.8" }}>
+        <div className="card" style={{ marginTop: "20px" }}>
           <p>🌡️ <b>Temperature:</b> {context.temperature}°C</p>
           <p>💨 <b>Wind Speed:</b> {context.windspeed} km/h</p>
           <p>🌱 <b>Soil Type:</b> {context.soil}</p>
