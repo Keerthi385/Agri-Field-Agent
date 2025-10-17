@@ -1,6 +1,3 @@
-# Requirements for Agri-Field-Agent backend
-# NOTE: PyTorch wheels are CUDA/CPU specific. On Windows you may need:
-#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 fastapi
 uvicorn[standard]
@@ -9,12 +6,8 @@ requests
 pillow
 aiofiles
 pydantic
-
-# Model inference
 torch
 torchvision
-
-# TTS and translation
 gtts
 googletrans==4.0.0rc1
 

@@ -7,6 +7,8 @@ export default function FertilizerPage() {
   const [condition, setCondition] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [voiceUrl, setVoiceUrl] = useState("");
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
