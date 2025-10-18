@@ -13,6 +13,7 @@ from gtts import gTTS
 from googletrans import Translator
 import os
 from fastapi.staticfiles import StaticFiles
+import numpy as np
 
 app = FastAPI()
 
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # =====================
@@ -57,12 +59,70 @@ model.eval()
 # Predict endpoint
 # =====================
 
+import numpy as np
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    img_t = transform(img).unsqueeze(0)
 
+    # --- Robust leaf check using Excess Green (ExG) ---
+    # Resize for speed, keep aspect ratio
+    img_small = img.resize((256, int(256 * img.height / img.width))) if img.width > img.height else img.resize((int(256 * img.width / img.height), 256))
+    np_img = np.array(img_small).astype(np.float32)
+
+    R = np_img[..., 0]
+    G = np_img[..., 1]
+    B = np_img[..., 2]
+
+    # Compute Excess Green index
+    ExG = 2 * G - R - B
+
+    # Normalize ExG roughly to 0-255 by clipping
+    ExG_clip = np.clip(ExG, -255, 255)
+    # threshold: consider pixel vegetation if ExG > exg_thresh
+    exg_thresh = 20.0   # you can tune this (lower = more permissive)
+    veg_mask = ExG_clip > exg_thresh
+
+    green_ratio = veg_mask.mean()  # fraction of pixels classified as vegetation
+
+    # Also compute overall brightness to reject very dark/blank images
+    brightness = np.mean((R + G + B) / 3.0)
+
+    # Determine pass/fail with tolerant thresholds (tune if necessary)
+    MIN_GREEN_RATIO = 0.03   # require at least 3% vegetation pixels (low to allow diseased leaves)
+    MIN_BRIGHTNESS = 20.0    # avoid almost-black images
+
+    if brightness < MIN_BRIGHTNESS or green_ratio < MIN_GREEN_RATIO:
+        # borderline: if green_ratio is slightly below, allow fallback with warning
+        if green_ratio >= 0.01 and brightness >= 15.0:
+            # fallback: attempt prediction but mark as uncertain
+            img_t = transform(img).unsqueeze(0)
+            with torch.no_grad():
+                outputs = model(img_t)
+                _, pred = outputs.max(1)
+            result = class_names[pred.item()]
+
+            try:
+                with open("disease_library.json", "r") as f:
+                    disease_info = json.load(f)
+                info = disease_info.get(result, {})
+            except Exception:
+                info = {}
+
+            return JSONResponse({
+                "prediction": result,
+                "details": info,
+                "warning": "Image had low vegetation signal — result may be unreliable. Please upload a clearer leaf photo if possible."
+            })
+        # hard reject
+        return JSONResponse({
+            "prediction": "Not a leaf image",
+            "details": {"advice": "Please upload a clear leaf image for disease detection."}
+        })
+
+    # Passed the check — continue with normal prediction
+    img_t = transform(img).unsqueeze(0)
     with torch.no_grad():
         outputs = model(img_t)
         _, pred = outputs.max(1)
@@ -81,8 +141,6 @@ async def predict(file: UploadFile = File(...)):
         "prediction": result,
         "details": info
     })
-
-
 
 
 class FertilizerRequest(BaseModel):
@@ -222,7 +280,6 @@ def generate_voice(data: AdvisoryRequest):
     """Generate vernacular (Telugu) voice note for advisory."""
     crop = data.crop.lower()
     disease = data.disease.replace("_", " ")
-    soil = data.soil
     condition = data.condition
 
     # Generate English advisory
