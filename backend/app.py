@@ -14,6 +14,7 @@ from googletrans import Translator
 import os
 from fastapi.staticfiles import StaticFiles
 import numpy as np
+import math
 
 app = FastAPI()
 
@@ -303,3 +304,124 @@ def generate_voice(data: AdvisoryRequest):
     tts.save(file_path)
 
     return {"audio_url": f"http://127.0.0.1:8000/{file_path}"}
+
+@app.get("/market")
+def get_market_prices():
+    """Return current crop market prices (mock/demo)."""
+    prices = {
+        "rice": {"price": "₹1800 / quintal", "market": "Nizamabad"},
+        "wheat": {"price": "₹2100 / quintal", "market": "Kurnool"},
+        "cotton": {"price": "₹6400 / quintal", "market": "Warangal"},
+        "tomato": {"price": "₹2400 / quintal", "market": "Madurai"},
+        "groundnut": {"price": "₹5200 / quintal", "market": "Anantapur"}
+    }
+    return prices
+
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    # returns distance in kilometers between two lat/lon points
+    R = 6371.0
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+MANDIS = [
+    {"name": "Nizamabad Mandi", "lat": 18.6726, "lon": 78.0944, "prices": {"rice": 1800, "wheat": 2100}},
+    {"name": "Kurnool Mandi", "lat": 15.8281, "lon": 78.0373, "prices": {"rice": 1750, "wheat": 2100}},
+    {"name": "Warangal Mandi", "lat": 17.9789, "lon": 79.5941, "prices": {"cotton": 6400}},
+    {"name": "Madurai Mandi", "lat": 9.9252, "lon": 78.1198, "prices": {"tomato": 2400}},
+    {"name": "Anantapur Mandi", "lat": 14.6810, "lon": 77.6000, "prices": {"groundnut": 5200}},
+]
+
+@app.get("/market/nearby")
+def get_nearby_markets(
+    lat: float = Query(None),
+    lon: float = Query(None),
+    radius_km: float = Query(100.0),
+    state: str = Query(None),
+    city: str = Query(None),
+    district: str = Query(None)
+):
+    """Return mandis within `radius_km` of the provided lat/lon, or by state/city/district if provided."""
+    try:
+        # If state/city/district are provided, use them to filter mandis
+        if state and city and district:
+            location_mandis = {
+                "Maharashtra": {
+                    "Pune": [
+                        {"name": "Pune City Mandi", "lat": 18.5204, "lon": 73.8567, "prices": {"rice": 1850, "wheat": 2150}},
+                        {"name": "Haveli Mandi", "lat": 18.6050, "lon": 73.8553, "prices": {"cotton": 6500}}
+                    ],
+                    "Mumbai": [
+                        {"name": "Mumbai City Mandi", "lat": 19.0760, "lon": 72.8777, "prices": {"rice": 1900, "wheat": 2200}},
+                        {"name": "Thane Mandi", "lat": 19.2183, "lon": 72.9781, "prices": {"tomato": 2500}}
+                    ]
+                },
+                "Andhra Pradesh": {
+                    "Vizag": [
+                        {"name": "Vizag Mandi", "lat": 17.6868, "lon": 83.2185, "prices": {"rice": 1800, "groundnut": 5300}}
+                    ],
+                    "Vijayawada": [
+                        {"name": "Vijayawada Central Mandi", "lat": 16.5062, "lon": 80.6480, "prices": {"wheat": 2100, "cotton": 6400}}
+                    ],
+                    "Guntur": [
+                        {"name": "Guntur East Mandi", "lat": 16.3067, "lon": 80.4365, "prices": {"rice": 1750, "tomato": 2450}}
+                    ]
+                },
+                "Telangana": {
+                    "Hyderabad": [
+                        {"name": "Hyderabad Mandi", "lat": 17.3850, "lon": 78.4867, "prices": {"rice": 1800, "wheat": 2100}},
+                        {"name": "Secunderabad Mandi", "lat": 17.4399, "lon": 78.4983, "prices": {"cotton": 6400}}
+                    ]
+                }
+            }
+            mandis = location_mandis.get(state, {}).get(city, [])
+            # Filter by district if needed (for demo, just return all for city)
+            results = [
+                {
+                    "name": m["name"],
+                    "lat": m["lat"],
+                    "lon": m["lon"],
+                    "distance_km": 0,
+                    "prices": m["prices"]
+                }
+                for m in mandis
+            ]
+            if not results:
+                # Suggest some popular locations
+                suggestions = [
+                    {"state": "Telangana", "city": "Hyderabad", "district": "Hyderabad"},
+                    {"state": "Maharashtra", "city": "Pune", "district": "Pune City"},
+                    {"state": "Andhra Pradesh", "city": "Vizag", "district": "Visakhapatnam"}
+                ]
+                return {
+                    "count": 0,
+                    "nearby": [],
+                    "message": "No mandis available in this location.",
+                    "suggestions": suggestions
+                }
+            return {"count": len(results), "nearby": results}
+
+        # Otherwise, use lat/lon logic (default)
+        if lat is not None and lon is not None:
+            results = []
+            for mandi in MANDIS:
+                d = haversine_distance(lat, lon, mandi["lat"], mandi["lon"])
+                if d <= radius_km:
+                    results.append({
+                        "name": mandi["name"],
+                        "lat": mandi["lat"],
+                        "lon": mandi["lon"],
+                        "distance_km": round(d, 2),
+                        "prices": mandi["prices"]
+                    })
+            results = sorted(results, key=lambda x: x["distance_km"])
+            return {"count": len(results), "nearby": results}
+        return {"count": 0, "nearby": []}
+    except Exception as e:
+        return {"error": str(e)}
